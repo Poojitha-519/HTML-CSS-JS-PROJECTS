@@ -1,5 +1,5 @@
 document.getElementById("GenerateBtn").addEventListener("click", async function () {
-    let token = "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";
+   let token = ""
     let input = document.getElementById("textInput").value; // Get input from user
     let imageContainer = document.getElementById("imageContainer");
     let downloadBtn = document.getElementById("downloadBtn")

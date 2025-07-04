@@ -1,11 +1,18 @@
-// Speech recognition setup
-const recognition = new (window.SpeechRecognition ||
-  window.webkitSpeechRecognition)();
-recognition.lang = "en-US";
-const btn = document.querySelector("#listen-btn");
+// Check for Speech Recognition support
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
 
-// Attach click event listener to the button
-btn.addEventListener("click", function () {
+if (!SpeechRecognition) {
+  alert("Your browser does not support speech recognition. Please use Chrome.");
+} else {
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.continuous = false; // Stops after one input
+  recognition.interimResults = false; // Returns only final result
+  recognition.maxAlternatives = 1; // Ensures one best match
+
+  const btn = document.querySelector("#listen-btn");
+
   // Function to convert text to speech
   function speak(text) {
     const utterance = new SpeechSynthesisUtterance(text);
@@ -14,24 +21,43 @@ btn.addEventListener("click", function () {
 
   // Function to handle recognized commands
   function handleCommand(command) {
+    console.log("Recognized:", command);
+
     if (command.includes("open youtube")) {
-      speak("Opening YouTube...");
-      window.open("https://www.youtube.com", "_blank");
+      let words = command.split(" ");
+      let index = words.indexOf("youtube");
+
+      if (index !== -1 && words.length > index + 1) {
+        let channelName = words.slice(index + 1).join(" ");
+        speak(`Opening YouTube channel ${channelName}`);
+        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(channelName)}`, "_blank");
+      } else {
+        speak("Opening YouTube");
+        window.open("https://www.youtube.com", "_blank");
+      }
     } else if (command.includes("open google")) {
-      speak("Opening Google...");
+      speak("Opening Google");
       window.open("https://www.google.com", "_blank");
     } else if (command.includes("open facebook")) {
-      speak("Opening Facebook...");
+      speak("Opening Facebook");
       window.open("https://www.facebook.com", "_blank");
     } else if (command.includes("open instagram")) {
-      speak("Opening Instagram...");
-      window.open("https://www.instagram.com", "_blank");
+      let words = command.split(" ");
+      let index = words.indexOf("instagram");
+
+      if (index !== -1 && words.length > index + 1) {
+        let profileName = words.slice(index + 1).join(" ");
+        speak(`Opening Instagram profile ${profileName}`);
+        window.open(`https://www.instagram.com/${profileName}/`, "_blank");
+      } else {
+        speak("Opening Instagram");
+        window.open("https://www.instagram.com", "_blank");
+      }
     } else if (command.includes("open whatsapp")) {
-      speak("Opening WhatsApp...");
-      window.open("https://www.whatsapp.com", "_blank");
+      speak("Opening WhatsApp");
+      window.open("https://web.whatsapp.com", "_blank");
     } else {
-      // Perform a Google search if command not recognized
-      speak("Searching Google for " + command);
+      speak("Searching...");
       window.open(
         `https://www.google.com/search?q=${encodeURIComponent(command)}`,
         "_blank"
@@ -39,26 +65,30 @@ btn.addEventListener("click", function () {
     }
   }
 
-  // Greet the user and then start listening
-  speak("Hello, how can I help you?");
-
-  // Delay to ensure greeting completes before starting recognition
-  setTimeout(() => {
+  // Button click event
+  btn.addEventListener("click", function () {
+    speak("Listening...");
     btn.innerHTML = "Listening...👂";
     btn.classList.add("listening");
     recognition.start();
-  }, 2500);
 
-  // When a result is received
+    // Stop recognition after 8 seconds if no input is received
+    setTimeout(() => {
+      recognition.stop();
+      btn.innerHTML = "Start Listening";
+      btn.classList.remove("listening");
+    }, 8000); // 8 seconds
+  });
+
+  // When a command is recognized
   recognition.onresult = (event) => {
-    console.log(event);
     const command = event.results[0][0].transcript.toLowerCase();
     handleCommand(command);
   };
 
-  // When recognition ends
+  // When recognition ends, reset button
   recognition.onend = () => {
     btn.innerHTML = "Start Listening";
     btn.classList.remove("listening");
   };
-});
+}
